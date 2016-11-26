@@ -1,0 +1,99 @@
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.io.ratpack:ratpack-gradle:1.4.4'
+    }
+}
+
+apply plugin: 'io.ratpack.ratpack-base'
+apply plugin: 'groovy'
+apply plugin: 'codenarc'
+apply plugin: 'java-gradle-plugin'
+
+apply from: 'gradle/idea/idea.gradle'
+apply from: 'gradle/dependencyRules.gradle'
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+gradlePlugin {
+    plugins {
+        herokuRunnableJarDeploymentPlugin {
+            id = 'com.energizedwork.heroku-buildpack-runnable-jar'
+            implementationClass = 'com.energizedwork.gradle.heroku.HerokuRunnableJarDeploymentPlugin'
+        }
+    }
+}
+
+dependencies {
+    codenarc('org.codenarc:CodeNarc:0.26.0') {
+        exclude module: 'GMetrics'
+    }
+
+    compile 'org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r'
+    compile 'com.squareup.okhttp3:okhttp:3.4.2'
+
+    testCompile 'com.amazonaws:aws-java-sdk-s3:1.11.52'
+    testCompile ratpack.dependency('test')
+    testCompile 'org.gebish:geb-waiting:1.0'
+    testCompile 'com.nagternal:spock-genesis:0.6.0'
+}
+
+task writeTestConfig(type: WriteTestConfig) {
+    generatedTestResourcesDir = file("$buildDir/generated-test-resources")
+    testConfig(
+        herokuApiKey: project.herokuApiKey,
+        awsAccessKey: project.awsAccessKey,
+        awsSecretKey: project.awsSecretKey
+    )
+}
+
+processTestResources {
+    from writeTestConfig
+}
+
+sourceSets.test.resources.srcDir writeTestConfig.outputs.files.singleFile
+
+ideaModule {
+    dependsOn writeTestConfig
+}
+
+codenarc.configFile = rootProject.file('gradle/codenarc/rulesets.groovy')
+
+idea {
+    workspace {
+        iws.withXml { provider ->
+            def node = provider.asNode()
+            def runManager = node.component.find { it.'@name' == 'RunManager' }
+
+            def defaultJUnitConf = runManager.configuration.find { it.'@default' == 'true' && it.'@type' == 'JUnit' }
+
+            defaultJUnitConf.method.replaceNode {
+                method {
+                    option(
+                        name: 'Gradle.BeforeRunTask',
+                        enabled: true,
+                        tasks: 'classes pluginUnderTestMetadata processTestResources',
+                        externalProjectPath: '$PROJECT_DIR$/build.gradle'
+                    )
+                    option(name: 'Make', enabled: true)
+                }
+            }
+        }
+    }
+
+    project {
+        vcs = 'Git'
+
+        ipr.withXml { provider ->
+            def rootConfigFileNode = new XmlParser().parse(file('gradle/idea/gradle.xml'))
+            provider.asNode().append(rootConfigFileNode)
+        }
+    }
+}

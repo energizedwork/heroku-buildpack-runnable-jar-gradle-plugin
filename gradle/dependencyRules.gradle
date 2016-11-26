@@ -1,0 +1,40 @@
+def artifactVersionMappings = [
+    'org.codehaus.groovy:groovy-all'             : new ArtifactVersionMapping(excludedVersions: ['2.4.1', '2.4.6'], useVersion: '2.4.7'),
+    'commons-io:commons-io'                      : new ArtifactVersionMapping(excludedVersions: ['1.4'], useVersion: '2.4'),
+    'com.fasterxml.jackson.core:jackson-databind': new ArtifactVersionMapping(excludedVersions: ['2.2.3', '2.6.6'], useVersion: '2.7.5'),
+    'com.fasterxml.jackson.core:jackson-core'    : new ArtifactVersionMapping(excludedVersions: ['2.6.6'], useVersion: '2.7.5'),
+    'commons-logging:commons-logging'            : new ArtifactVersionMapping(excludedVersions: ['1.1.3'], useVersion: '1.2'),
+    'commons-codec:commons-codec'                : new ArtifactVersionMapping(excludedVersions: ['1.6', '1.7'], useVersion: '1.9'),
+    'org.apache.httpcomponents:httpclient'       : new ArtifactVersionMapping(excludedVersions: ['4.3.6'], useVersion: '4.5.2'),
+    'org.slf4j:slf4j-api'                        : new ArtifactVersionMapping(excludedVersions: ['1.7.2'], useVersion: '1.7.21')
+]
+
+allprojects {
+    configurations.all { configuration ->
+        resolutionStrategy {
+            gradle.taskGraph.whenReady { taskGraph ->
+                if (configuration.state != Configuration.State.RESOLVED && !taskGraph.allTasks.any {
+                    it.name in ['dependencies', 'dependencyInsight']
+                }) {
+                    failOnVersionConflict()
+                }
+            }
+            eachDependency { details ->
+                def requested = details.requested
+
+                def groupAndName = "$requested.group:$requested.name".toString()
+                if (artifactVersionMappings.containsKey(groupAndName)) {
+                    def mapping = artifactVersionMappings[groupAndName]
+                    if (mapping.excludedVersions.contains(requested.version)) {
+                        details.useVersion mapping.useVersion
+                    }
+                }
+            }
+        }
+    }
+}
+
+class ArtifactVersionMapping {
+    String useVersion
+    List<String> excludedVersions
+}
