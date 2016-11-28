@@ -15,7 +15,7 @@
  */
 package com.energizedwork.gradle.heroku
 
-class HerokuRunnableJarDeploymentPluginExtension {
+class HerokuRunnableJarBuildpackPluginExtension {
 
     String procfileContents
     String artifactUrl

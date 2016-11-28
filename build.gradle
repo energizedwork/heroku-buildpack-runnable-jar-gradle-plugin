@@ -26,7 +26,7 @@ gradlePlugin {
     plugins {
         herokuRunnableJarDeploymentPlugin {
             id = 'com.energizedwork.heroku-buildpack-runnable-jar'
-            implementationClass = 'com.energizedwork.gradle.heroku.HerokuRunnableJarDeploymentPlugin'
+            implementationClass = 'com.energizedwork.gradle.heroku.HerokuRunnableJarBuildpackPlugin'
         }
     }
 }

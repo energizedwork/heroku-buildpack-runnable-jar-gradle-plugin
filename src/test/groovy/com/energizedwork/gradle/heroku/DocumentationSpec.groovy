@@ -22,8 +22,8 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarDeploymentPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarDeploymentPlugin.DEPLOY_TASK_NAME
+import static HerokuRunnableJarBuildpackPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
+import static HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME
 
 class DocumentationSpec extends Specification {
 

@@ -29,8 +29,8 @@ import spock.genesis.Gen
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarDeploymentPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarDeploymentPlugin.DEPLOY_TASK_NAME
+import static HerokuRunnableJarBuildpackPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
+import static HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
@@ -203,7 +203,7 @@ class IntegrationSpec extends Specification {
                 id 'com.energizedwork.heroku-buildpack-runnable-jar'
             }
 
-            $HerokuRunnableJarDeploymentPlugin.NAME {
+            $HerokuRunnableJarBuildpackPlugin.NAME {
                 ${config.join('\n')}
             }
         """
