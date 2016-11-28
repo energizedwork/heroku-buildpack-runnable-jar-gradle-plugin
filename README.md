@@ -15,19 +15,20 @@ For installation instructions please see [this plugin's page on Gradle Plugin Po
 
 This plugin exposes the following `String` properties through the extension named `herokuBuildpackRunnableJar`:
 
-|Name|Required|Default value|Description|
-|-|-|-|-|
-|`artifactUrl`|Yes||The url of the artifact to be downloaded by heroku runnable jar buildpack upon deployment|
-|`apiKey`|Yes||A Heroku API key which is authorized to access the Heroku application for which the deployment is to be performed|
-|`applicatonName`|No|Project name|The name of the Heroku application for which the deployment is to be performed; the name of the project to which this plugin is applied will be used if unspecified; has no effect if `gitUrl` is also specified|
-|`gitUrl`|No||The `https` url of git repository for the Heroku application for which the deployment is to be performed; by default obtained using Heroku API and based on `applicationName`; does not need to be specified in most use cases|
-|`procfileContents`|No|`web: java -jar application.jar`|Allows to specify contents of the `Procfile` file that will be pushed as part of the deployment; the default value should be good enough in most use cases|
-|`javaVersion`|No||Jvm version to be used; allowed values are as specified in [Heroku documentation](https://devcenter.heroku.com/articles/java-support#specifying-a-java-version); the latest version available in Heroku will be used if unspecified|
+| Name | Required | Default value | Description |
+| --- | --- | --- | --- |
+| `artifactUrl` | Yes | | The url of the artifact to be downloaded by heroku runnable jar buildpack upon deployment. |
+| `apiKey`| Yes | | A Heroku API key which is authorized to access the Heroku application for which the deployment is to be performed. |
+| `applicatonName` | No | Project name | The name of the Heroku application for which the deployment is to be performed. The name of the project to which this plugin is applied will be used if unspecified. Has no effect if `gitUrl` is also specified. |
+| `gitUrl` | No | | The `https` url of git repository for the Heroku application for which the deployment is to be performed. By default obtained using Heroku API and based on `applicationName`. Does not need to be specified in most use cases. |
+| `procfileContents` | No | `web: java -jar application.jar` | Allows to specify contents of the `Procfile` file that will be pushed as part of the deployment. The default value should be good enough in most use cases. |
+| `javaVersion` | No | | JVM version to be used by the deployed application. Allowed values are as specified in [Heroku documentation](https://devcenter.heroku.com/articles/java-support#specifying-a-java-version). The latest JVM version available in Heroku will be used if unspecified. |
 
 Example usage:
 
     herokuBuildpackRunnableJar {
-        artifactUrl = "https://example.com/my-runnable-jar.jar
+        artifactUrl = "https://example.com/my-runnable-jar.jar"
+        applicationName = "cryptic-ocean-8852"
         apiKey = "01234567-89ab-cdef-0123-456789abcdef"
     }
 
