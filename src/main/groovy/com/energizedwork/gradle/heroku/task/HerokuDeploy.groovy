@@ -30,8 +30,10 @@ import org.gradle.api.tasks.TaskAction
 
 class HerokuDeploy extends DefaultTask {
 
-    private final static String HEROKU_API_URL = 'https://api.heroku.com'
     public static final String REMOTE_NAME = 'origin'
+    public static final String DESCRIPTION = 'Deploys an application using runnable jar buildpack to Heroku'
+
+    private final static String HEROKU_API_URL = 'https://api.heroku.com'
 
     @InputFiles
     FileCollection repoContents
@@ -42,8 +44,13 @@ class HerokuDeploy extends DefaultTask {
     @Input
     String apiKey
 
+    HerokuDeploy() {
+        group = 'Deployment'
+        description = DESCRIPTION
+    }
+
     private void commit(Git repo) {
-        repo.commit().setMessage('Deployment').call()
+        repo.commit().setMessage('Automated deployment').call()
     }
 
     private void copyRepoContents() {

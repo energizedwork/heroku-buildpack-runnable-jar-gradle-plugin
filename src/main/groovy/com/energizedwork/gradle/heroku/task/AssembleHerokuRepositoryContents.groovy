@@ -23,6 +23,8 @@ import org.gradle.api.tasks.TaskAction
 
 class AssembleHerokuRepositoryContents extends DefaultTask {
 
+    public static final String DESCRIPTION = 'Writes files needed to perform a deployment of an application using the runnable jar buildpack to Heroku'
+
     @Input
     String procfileContents
 
@@ -38,6 +40,8 @@ class AssembleHerokuRepositoryContents extends DefaultTask {
 
     AssembleHerokuRepositoryContents() {
         repositoryContentsDir = new File(project.buildDir, 'heroku-repository-contents')
+        group = 'Deployment'
+        description = DESCRIPTION
     }
 
     @TaskAction
