@@ -6,6 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'gradle.plugin.io.ratpack:ratpack-gradle:1.4.4'
+        classpath 'com.gradle.publish:plugin-publish-plugin:0.9.6'
     }
 }
 
@@ -13,6 +14,7 @@ apply plugin: 'io.ratpack.ratpack-base'
 apply plugin: 'groovy'
 apply plugin: 'codenarc'
 apply plugin: 'java-gradle-plugin'
+apply plugin: 'com.gradle.plugin-publish'
 
 apply from: 'gradle/idea/idea.gradle'
 apply from: 'gradle/dependencyRules.gradle'
@@ -22,11 +24,27 @@ repositories {
     mavenCentral()
 }
 
+version = '1.0'
+
 gradlePlugin {
     plugins {
-        herokuRunnableJarDeploymentPlugin {
+        herokuRunnableJarBuildpackPlugin {
             id = 'com.energizedwork.heroku-buildpack-runnable-jar'
             implementationClass = 'com.energizedwork.gradle.heroku.HerokuRunnableJarBuildpackPlugin'
+        }
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/energizedwork/heroku-buildpack-runnable-jar-gradle-plugin/blob/master/README.md'
+    vcsUrl = 'https://github.com/energizedwork/heroku-buildpack-runnable-jar-gradle-plugin'
+    description = 'A Gradle plugin for deploying applications using runnable jar buildpack to Heroku'
+    tags = ['heroku', 'fatjar', 'deployment']
+
+    plugins {
+        herokuRunnableJarBuildpackPlugin {
+            id = 'com.energizedwork.heroku-buildpack-runnable-jar'
+            displayName = 'Heroku Runnable Jar Buildpack plugin'
         }
     }
 }
