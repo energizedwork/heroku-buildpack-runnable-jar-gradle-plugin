@@ -29,21 +29,24 @@ import static io.netty.handler.codec.http.HttpResponseStatus.CREATED
 import static io.netty.handler.codec.http.HttpResponseStatus.OK
 import static ratpack.test.http.TestHttpClient.testHttpClient
 
-class TemporaryHerokuApp extends ExternalResource implements ApplicationUnderTest {
+class TemporaryRunnableJarHerokuApp extends ExternalResource implements ApplicationUnderTest {
+
+    private static final String RUNNABLE_JAR_BUILDPACK_URL = 'https://github.com/energizedwork/heroku-buildpack-runnable-jar'
 
     private final static String HEROKU_API_URL = 'https://api.heroku.com/'
 
     private final TestHttpClient client = testHttpClient { new URI(HEROKU_API_URL) }
 
+    private final Map<String, String> configVars
+
     @Delegate
     private HerokuAppDetails appDetails
 
-    private final String buildpackUrl
     private final String herokuApiKey
 
-    TemporaryHerokuApp(String buildpackUrl, String herokuApiKey) {
-        this.buildpackUrl = buildpackUrl
+    TemporaryRunnableJarHerokuApp(Map<String, String> configVars = [:], String herokuApiKey) {
         this.herokuApiKey = herokuApiKey
+        this.configVars = [NO_PRE_DEPLOY: 'true'] + configVars
     }
 
     protected void before() throws Throwable {
@@ -91,7 +94,7 @@ class TemporaryHerokuApp extends ExternalResource implements ApplicationUnderTes
         jsonRequest([
                 updates: [
                         [
-                                buildpack: buildpackUrl
+                                buildpack: RUNNABLE_JAR_BUILDPACK_URL
                         ]
                 ]
         ])
@@ -99,9 +102,7 @@ class TemporaryHerokuApp extends ExternalResource implements ApplicationUnderTes
     }
 
     private void setupConfigVars() {
-        jsonRequest([
-                NO_PRE_DEPLOY: 'true'
-        ])
+        jsonRequest(configVars)
         assert client.patch("apps/$name/config-vars").statusCode == OK.code()
     }
 

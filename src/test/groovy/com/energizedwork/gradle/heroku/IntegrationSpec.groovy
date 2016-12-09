@@ -15,53 +15,24 @@
  */
 package com.energizedwork.gradle.heroku
 
-import com.energizedwork.gradle.heroku.fixture.RatpackProjectBuilder
-import com.energizedwork.gradle.heroku.fixture.TemporaryHerokuApp
-import com.energizedwork.gradle.heroku.fixture.TemporaryS3Bucket
-import com.energizedwork.gradle.heroku.fixture.TestConfig
-import geb.waiting.Wait
-import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
-import org.junit.ClassRule
+import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.genesis.Gen
-import spock.lang.Shared
-import spock.lang.Specification
 
 import static HerokuRunnableJarBuildpackPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
 import static HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
-class IntegrationSpec extends Specification {
+class IntegrationSpec extends BaseIntegrationSpec {
 
     private static final String DEFAULT_RESPONSE = 'Deployed using runnable jar'
 
-    private static final String RUNNABLE_JAR_BUILDPACK_URL = 'https://github.com/energizedwork/heroku-buildpack-runnable-jar'
-
-    @Shared
-    TestConfig testConfig = new TestConfig()
-
-    @ClassRule
-    @Shared
-    RatpackProjectBuilder ratpackProjectBuilder = new RatpackProjectBuilder()
-
-    @ClassRule
-    @Shared
-    TemporaryS3Bucket s3Bucket = new TemporaryS3Bucket(testConfig.awsAccessKey, testConfig.awsSecretKey)
-
-    @Shared
-    String artifactUrl
-
     @Rule
-    TemporaryHerokuApp herokuApp = new TemporaryHerokuApp(RUNNABLE_JAR_BUILDPACK_URL, testConfig.herokuApiKey)
+    TemporaryRunnableJarHerokuApp herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey)
 
-    @Rule
-    TemporaryFolder testProjectDir
-
-    def setupSpec() {
-        artifactUrl = s3Bucket.uploadPublicly(ratpackProjectBuilder.buildAppRespondingWith(DEFAULT_RESPONSE))
+    File getArtifactFile() {
+        ratpackProjectBuilder.buildRunnableJarRespondingWith(DEFAULT_RESPONSE)
     }
 
     def "deploying when application name is defined"() {
@@ -177,46 +148,4 @@ class IntegrationSpec extends Specification {
         then:
         buildResult.output.contains('Did you correctly configure Heroku application name and API key?')
     }
-
-    private GradleRunner runnerForDeployTask() {
-        GradleRunner.create()
-                .withProjectDir(testProjectDir.root)
-                .withArguments(DEPLOY_TASK_NAME)
-                .withPluginClasspath()
-    }
-
-    private BuildResult successfullyRunDeployTask() {
-        runnerForDeployTask().build()
-    }
-
-    private BuildResult runDeployTaskWithFailure() {
-        runnerForDeployTask().buildAndFail()
-    }
-
-    private void pluginConfigWithApiKey(String config) {
-        pluginConfigWithoutApiKey("apiKey = '$testConfig.herokuApiKey'", config)
-    }
-
-    private void pluginConfigWithoutApiKey(String... config) {
-        testProjectDir.newFile('build.gradle') << """
-            plugins {
-                id 'com.energizedwork.heroku-buildpack-runnable-jar'
-            }
-
-            $HerokuRunnableJarBuildpackPlugin.NAME {
-                ${config.join('\n')}
-            }
-        """
-    }
-
-    private void setProjectName(String name) {
-        testProjectDir.newFile('settings.gradle') << """
-            rootProject.name = '$name'
-        """
-    }
-
-    private <T> T waitFor(Closure<T> block) {
-        new Wait(30).waitFor(block)
-    }
-
 }

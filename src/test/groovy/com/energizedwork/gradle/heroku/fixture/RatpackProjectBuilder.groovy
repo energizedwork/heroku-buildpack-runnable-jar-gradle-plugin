@@ -23,7 +23,7 @@ import org.junit.runners.model.Statement
 
 class RatpackProjectBuilder implements TestRule {
 
-    private final static String PROJECT_NAME = 'ratpack-app'
+    public final static String PROJECT_NAME = 'ratpack-app'
 
     TemporaryFolder testProjectDir = new TemporaryFolder()
 
@@ -32,17 +32,25 @@ class RatpackProjectBuilder implements TestRule {
         testProjectDir.apply(base, description)
     }
 
-    File buildAppRespondingWith(String responseText) {
+    private void runBuild(String task, String responseText) {
         writeBuildFile()
         writeRatpackApplication(responseText)
         writeSettingsFile()
 
         GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
-                .withArguments('shadowJar')
+                .withArguments(task)
                 .build()
+    }
 
+    File buildRunnableJarRespondingWith(String responseText) {
+        runBuild('shadowJar', responseText)
         new File(testProjectDir.root, "build/libs/$PROJECT_NAME-all.jar")
+    }
+
+    File buildDistributionZipRespondingWith(String responseText) {
+        runBuild('packageApp', responseText)
+        new File(testProjectDir.root, 'build/distributions/main.zip')
     }
 
     private File writeSettingsFile() {
@@ -82,6 +90,11 @@ class RatpackProjectBuilder implements TestRule {
             }
 
             mainClassName = "App"
+
+            task packageApp(type: Zip) {
+                archiveName = "main.zip"
+                with distributions.main.contents
+            }
         '''
     }
 }
