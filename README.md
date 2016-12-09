@@ -26,7 +26,7 @@ This plugin exposes the following `String` properties through the extension name
 
 Example usage:
 
-    herokuBuildpackRunnableJar {
+    herokuRunnableJarBuildpack {
         artifactUrl = "https://example.com/my-runnable-jar.jar"
         applicationName = "cryptic-ocean-8852"
         apiKey = "01234567-89ab-cdef-0123-456789abcdef"
