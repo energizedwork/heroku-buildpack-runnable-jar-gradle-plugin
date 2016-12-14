@@ -43,6 +43,7 @@ class HerokuRunnableJarBuildpackPlugin implements Plugin<Project> {
                 pluginExtension.procfileContents ?: DEFAULT_PROCFILE_CONTENTS
             }
             conventionMapping.artifactUrl = { pluginExtension.artifactUrl }
+            conventionMapping.artifactFile = { pluginExtension.artifactFile }
             conventionMapping.javaVersion = { pluginExtension.javaVersion }
         }
     }

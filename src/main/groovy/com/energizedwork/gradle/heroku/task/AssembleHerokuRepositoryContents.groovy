@@ -16,10 +16,8 @@
 package com.energizedwork.gradle.heroku.task
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.InvalidUserDataException
+import org.gradle.api.tasks.*
 
 class AssembleHerokuRepositoryContents extends DefaultTask {
 
@@ -29,7 +27,12 @@ class AssembleHerokuRepositoryContents extends DefaultTask {
     String procfileContents
 
     @Input
+    @Optional
     String artifactUrl
+
+    @InputFile
+    @Optional
+    File artifactFile
 
     @Input
     @Optional
@@ -46,10 +49,26 @@ class AssembleHerokuRepositoryContents extends DefaultTask {
 
     @TaskAction
     void assemble() {
+        if (getArtifactFile() && getArtifactUrl()) {
+            throw new InvalidUserDataException('Only one of artifactFile and artifactUrl properties should be set but both were.')
+        }
         new File(repositoryContentsDir, 'Procfile') << getProcfileContents()
-        new File(repositoryContentsDir, 'manifest.sh') << """ARTIFACT_URL=${getArtifactUrl()}"""
+        new File(repositoryContentsDir, 'manifest.sh') << (getArtifactUrl() ? """ARTIFACT_URL=${getArtifactUrl()}""" : '')
         if (getJavaVersion()) {
             new File(repositoryContentsDir, 'system.properties') << "java.runtime.version=${getJavaVersion()}"
         }
+        if (getArtifactFile()) {
+            new File(repositoryContentsDir, "application${artifactExtension()}") << getArtifactFile().newInputStream()
+        }
+    }
+
+    private String artifactExtension() {
+        def name = getArtifactFile().name
+        def extension = name[name.lastIndexOf('.')..-1]
+        if (!['.zip', '.jar'].contains(extension)) {
+            throw new InvalidUserDataException('Only .jar and .zip extensions are allowed for the artifact file.')
+        }
+        extension
+
     }
 }

@@ -15,42 +15,22 @@
  */
 package com.energizedwork.gradle.heroku
 
-import com.energizedwork.gradle.heroku.fixture.RatpackProjectBuilder
-import com.energizedwork.gradle.heroku.fixture.TemporaryS3Bucket
 import com.energizedwork.gradle.heroku.fixture.TestConfig
 import geb.waiting.Wait
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 
-abstract class BaseIntegrationSpec extends Specification {
+class BaseIntegrationSpec extends Specification {
 
     @Shared
     TestConfig testConfig = new TestConfig()
 
-    @ClassRule
-    @Shared
-    RatpackProjectBuilder ratpackProjectBuilder = new RatpackProjectBuilder()
-
-    @ClassRule
-    @Shared
-    TemporaryS3Bucket s3Bucket = new TemporaryS3Bucket(testConfig.awsAccessKey, testConfig.awsSecretKey)
-
-    @Shared
-    String artifactUrl
-
     @Rule
     TemporaryFolder testProjectDir
-
-    def setupSpec() {
-        artifactUrl = s3Bucket.uploadPublicly(artifactFile)
-    }
-
-    abstract File getArtifactFile()
 
     protected GradleRunner runnerForDeployTask() {
         GradleRunner.create()

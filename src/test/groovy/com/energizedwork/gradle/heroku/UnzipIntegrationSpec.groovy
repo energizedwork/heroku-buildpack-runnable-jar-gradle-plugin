@@ -17,23 +17,42 @@ package com.energizedwork.gradle.heroku
 
 import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
 import org.junit.Rule
+import spock.lang.Shared
 
-class UnzipIntegrationSpec extends BaseIntegrationSpec {
+class UnzipIntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     private static final String DEFAULT_RESPONSE = 'Deployed using zip'
 
     @Rule
     TemporaryRunnableJarHerokuApp herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey, UNZIP_ARTIFACT: 'true')
 
-    @Override
-    File getArtifactFile() {
-        ratpackProjectBuilder.buildDistributionZipRespondingWith(DEFAULT_RESPONSE)
+    @Shared
+    private File artifact
+
+    def setupSpec() {
+        artifact = ratpackProjectBuilder.buildDistributionZipRespondingWith(DEFAULT_RESPONSE)
+        upload(artifact)
     }
 
     def "deploying a distribution zip"() {
         given:
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
+            applicationName = '$herokuApp.name'
+            procfileContents = 'web: bin/${ratpackProjectBuilder.PROJECT_NAME}'
+        """
+
+        when:
+        successfullyRunDeployTask()
+
+        then:
+        waitFor { herokuApp.httpClient.text == DEFAULT_RESPONSE }
+    }
+
+    def "deploying by pushing a file"() {
+        given:
+        pluginConfigWithApiKey """
+            artifactFile = new File('${artifact.absolutePath}')
             applicationName = '$herokuApp.name'
             procfileContents = 'web: bin/${ratpackProjectBuilder.PROJECT_NAME}'
         """

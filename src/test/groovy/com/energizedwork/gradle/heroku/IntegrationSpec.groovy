@@ -18,21 +18,26 @@ package com.energizedwork.gradle.heroku
 import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
 import org.junit.Rule
 import spock.genesis.Gen
+import spock.lang.Shared
 
 import static HerokuRunnableJarBuildpackPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
 import static HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
-class IntegrationSpec extends BaseIntegrationSpec {
+class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     private static final String DEFAULT_RESPONSE = 'Deployed using runnable jar'
 
     @Rule
     TemporaryRunnableJarHerokuApp herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey)
 
-    File getArtifactFile() {
-        ratpackProjectBuilder.buildRunnableJarRespondingWith(DEFAULT_RESPONSE)
+    @Shared
+    private File artifact
+
+    def setupSpec() {
+        artifact = ratpackProjectBuilder.buildRunnableJarRespondingWith(DEFAULT_RESPONSE)
+        upload(artifact)
     }
 
     def "deploying when application name is defined"() {
@@ -113,6 +118,20 @@ class IntegrationSpec extends BaseIntegrationSpec {
         overriddenResponse = 'Overridden using procfile'
     }
 
+    def "deploying by pushing a file"() {
+        given:
+        pluginConfigWithApiKey """
+            artifactFile = new File('${artifact.absolutePath}')
+            applicationName = '$herokuApp.name'
+        """
+
+        when:
+        successfullyRunDeployTask()
+
+        then:
+        waitFor { herokuApp.httpClient.text == DEFAULT_RESPONSE }
+    }
+
     def "assembleHerokuRepositoryContents is incremental and herokuDeploy is not"() {
         given:
         pluginConfigWithApiKey """
@@ -133,19 +152,5 @@ class IntegrationSpec extends BaseIntegrationSpec {
         then:
         buildResult.task(":$ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME").outcome == UP_TO_DATE
         buildResult.task(":$DEPLOY_TASK_NAME").outcome == SUCCESS
-    }
-
-    def "api key is mentioned in the error if it is not specified and is used to obtain git url of the app"() {
-        given:
-        pluginConfigWithoutApiKey """
-            artifactUrl = '$artifactUrl'
-            applicationName = '$herokuApp.name'
-        """
-
-        when:
-        def buildResult = runDeployTaskWithFailure()
-
-        then:
-        buildResult.output.contains('Did you correctly configure Heroku application name and API key?')
     }
 }

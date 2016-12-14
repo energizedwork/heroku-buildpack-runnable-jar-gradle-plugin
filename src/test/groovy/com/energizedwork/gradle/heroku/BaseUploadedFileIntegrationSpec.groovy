@@ -15,14 +15,26 @@
  */
 package com.energizedwork.gradle.heroku
 
-class HerokuRunnableJarBuildpackPluginExtension {
+import com.energizedwork.gradle.heroku.fixture.RatpackProjectBuilder
+import com.energizedwork.gradle.heroku.fixture.TemporaryS3Bucket
+import org.junit.ClassRule
+import spock.lang.Shared
 
-    String procfileContents
-    File artifactFile
+class BaseUploadedFileIntegrationSpec extends BaseIntegrationSpec {
+
+    @ClassRule
+    @Shared
+    RatpackProjectBuilder ratpackProjectBuilder = new RatpackProjectBuilder()
+
+    @ClassRule
+    @Shared
+    TemporaryS3Bucket s3Bucket = new TemporaryS3Bucket(testConfig.awsAccessKey, testConfig.awsSecretKey)
+
+    @Shared
     String artifactUrl
-    String gitUrl
-    String applicationName
-    String apiKey
-    String javaVersion
+
+    void upload(File file) {
+        artifactUrl = s3Bucket.uploadPublicly(file)
+    }
 
 }
