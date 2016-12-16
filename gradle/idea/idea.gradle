@@ -1,27 +1,10 @@
 apply plugin: 'idea'
 
+ideaJunit {
+    tasks = ['classes', 'pluginUnderTestMetadata', 'processTestResources']
+}
+
 idea {
-    workspace {
-        iws.withXml { provider ->
-            def node = provider.asNode()
-            def runManager = node.component.find { it.'@name' == 'RunManager' }
-
-            def defaultJUnitConf = runManager.configuration.find { it.'@default' == 'true' && it.'@type' == 'JUnit' }
-
-            defaultJUnitConf.method.replaceNode {
-                method {
-                    option(
-                            name: "Gradle.BeforeRunTask",
-                            enabled: true,
-                            tasks: "classes pluginUnderTestMetadata processTestResources",
-                            externalProjectPath: '$PROJECT_DIR$/build.gradle'
-                    )
-                    option(name: "Make", enabled: true)
-                }
-            }
-        }
-    }
-
     project {
         vcs = 'Git'
 

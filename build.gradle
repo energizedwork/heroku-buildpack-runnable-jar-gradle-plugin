@@ -7,6 +7,7 @@ buildscript {
     dependencies {
         classpath 'gradle.plugin.io.ratpack:ratpack-gradle:1.4.4'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.6'
+        classpath 'gradle.plugin.com.energizedwork.idea-junit:idea-gradle-plugins:1.0'
     }
 }
 
@@ -15,6 +16,7 @@ apply plugin: 'groovy'
 apply plugin: 'codenarc'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'com.gradle.plugin-publish'
+apply plugin: 'com.energizedwork.idea-junit'
 
 apply from: 'gradle/idea/idea.gradle'
 apply from: 'gradle/dependencyRules.gradle'
