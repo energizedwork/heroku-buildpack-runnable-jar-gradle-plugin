@@ -20,11 +20,6 @@ import org.junit.Rule
 import spock.genesis.Gen
 import spock.lang.Shared
 
-import static HerokuRunnableJarBuildpackPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
-import static HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
-import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
-
 class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     private static final String DEFAULT_RESPONSE = 'Deployed using runnable jar'
@@ -130,27 +125,5 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
         then:
         waitFor { herokuApp.httpClient.text == DEFAULT_RESPONSE }
-    }
-
-    def "assembleHerokuRepositoryContents is incremental and herokuDeploy is not"() {
-        given:
-        pluginConfigWithApiKey """
-            artifactUrl = '$artifactUrl'
-            applicationName = '$herokuApp.name'
-        """
-
-        when:
-        def buildResult = successfullyRunDeployTask()
-
-        then:
-        buildResult.task(":$ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME").outcome == SUCCESS
-        buildResult.task(":$DEPLOY_TASK_NAME").outcome == SUCCESS
-
-        when:
-        buildResult = successfullyRunDeployTask()
-
-        then:
-        buildResult.task(":$ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME").outcome == UP_TO_DATE
-        buildResult.task(":$DEPLOY_TASK_NAME").outcome == SUCCESS
     }
 }

@@ -52,6 +52,7 @@ class AssembleHerokuRepositoryContents extends DefaultTask {
         if (getArtifactFile() && getArtifactUrl()) {
             throw new InvalidUserDataException('Only one of artifactFile and artifactUrl properties should be set but both were.')
         }
+        project.delete { it.delete(repositoryContentsDir.listFiles()) }
         new File(repositoryContentsDir, 'Procfile') << getProcfileContents()
         new File(repositoryContentsDir, 'manifest.sh') << (getArtifactUrl() ? """ARTIFACT_URL=${getArtifactUrl()}""" : '')
         if (getJavaVersion()) {

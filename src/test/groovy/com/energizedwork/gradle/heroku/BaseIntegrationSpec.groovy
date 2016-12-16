@@ -32,11 +32,21 @@ class BaseIntegrationSpec extends Specification {
     @Rule
     TemporaryFolder testProjectDir
 
-    protected GradleRunner runnerForDeployTask() {
+    File buildFile
+
+    def setup() {
+        buildFile = testProjectDir.newFile('build.gradle')
+    }
+
+    protected GradleRunner runnerFor(String task) {
         GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
-                .withArguments(HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME)
+                .withArguments(task)
                 .withPluginClasspath()
+    }
+
+    protected GradleRunner runnerForDeployTask() {
+        runnerFor(HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME)
     }
 
     protected BuildResult successfullyRunDeployTask() {
@@ -52,7 +62,7 @@ class BaseIntegrationSpec extends Specification {
     }
 
     protected void pluginConfigWithoutApiKey(String... config) {
-        testProjectDir.newFile('build.gradle') << """
+        buildFile << """
             plugins {
                 id 'com.energizedwork.heroku-buildpack-runnable-jar'
             }
