@@ -19,11 +19,13 @@ import groovy.json.JsonSlurper
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.transport.PushResult
 import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.TaskAction
@@ -34,6 +36,8 @@ class HerokuDeploy extends DefaultTask {
     public static final String DESCRIPTION = 'Deploys an application using runnable jar buildpack to Heroku'
 
     private final static String HEROKU_API_URL = 'https://api.heroku.com'
+
+    private LogLevel pushMessageLogLevel = LogLevel.INFO
 
     @InputFiles
     FileCollection repoContents
@@ -47,6 +51,10 @@ class HerokuDeploy extends DefaultTask {
     HerokuDeploy() {
         group = 'Deployment'
         description = DESCRIPTION
+    }
+
+    void setPushMessageLogLevel(LogLevel logLevel) {
+        pushMessageLogLevel = logLevel
     }
 
     private void commit(Git repo) {
@@ -72,12 +80,15 @@ class HerokuDeploy extends DefaultTask {
     }
 
     private void forcePushHeadToRemoteMaster(Git repo) {
-        repo.push()
+        PushResult result = repo.push()
                 .setRemote(REMOTE_NAME)
                 .setRefSpecs(new RefSpec('HEAD:refs/heads/master'))
                 .setForce(true)
                 .setCredentialsProvider(new UsernamePasswordCredentialsProvider('', getApiKey()))
                 .call()
+                .first()
+
+        logger.log(pushMessageLogLevel, result.messages)
     }
 
     @TaskAction
