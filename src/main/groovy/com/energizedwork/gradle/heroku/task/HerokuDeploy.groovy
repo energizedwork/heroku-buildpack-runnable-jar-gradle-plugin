@@ -119,12 +119,16 @@ class HerokuDeploy extends DefaultTask {
 
         def response = client.newCall(request).execute()
 
-        if (!response.successful) {
-            def message = "Unexpected response from Heroku API when obtaining git url for '$appName': ${response.code()}."
-            message += 'Did you correctly configure Heroku application name and API key?'
-            throw new RuntimeException(message)
-        }
+        try {
+            if (!response.successful) {
+                def message = "Unexpected response from Heroku API when obtaining git url for '$appName': ${response.code()}. "
+                message += 'Did you correctly configure Heroku application name and API key?'
+                throw new RuntimeException(message)
+            }
 
-        new JsonSlurper().parseText(response.body().string()).git_url
+            new JsonSlurper().parseText(response.body().string()).git_url
+        } finally {
+            response.close()
+        }
     }
 }
