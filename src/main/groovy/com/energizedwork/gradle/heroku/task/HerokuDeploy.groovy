@@ -30,6 +30,8 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.TaskAction
 
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.OK
+
 class HerokuDeploy extends DefaultTask {
 
     public static final String REMOTE_NAME = 'origin'
@@ -89,6 +91,11 @@ class HerokuDeploy extends DefaultTask {
                 .first()
 
         logger.log(pushMessageLogLevel, result.messages)
+
+        def status = result.remoteUpdates.first().status
+        if (status != OK) {
+            throw new RuntimeException("Unexpected git remote update status: $status")
+        }
     }
 
     @TaskAction

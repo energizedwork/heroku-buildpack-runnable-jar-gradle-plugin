@@ -15,7 +15,13 @@
  */
 package com.energizedwork.gradle.heroku
 
+import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
+import spock.lang.AutoCleanup
+
 class ErrorsSpec extends BaseIntegrationSpec {
+
+    @AutoCleanup
+    TemporaryRunnableJarHerokuApp herokuApp
 
     def "api key is mentioned in the error if it is not specified and is used to obtain git url of the app"() {
         given:
@@ -55,6 +61,21 @@ class ErrorsSpec extends BaseIntegrationSpec {
 
         then:
         buildResult.output.contains('Only .jar and .zip extensions are allowed for the artifact file.')
+    }
+
+    def "build fails when push to heroku is not successful"() {
+        given:
+        herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey, NO_PRE_DEPLOY: null)
+        pluginConfigWithApiKey """
+            artifactUrl = 'not-a-url'
+            applicationName = '$herokuApp.name'
+        """
+
+        when:
+        def result = runDeployTaskWithFailure()
+
+        then:
+        result.output.contains 'Unexpected git remote update status'
     }
 
 }
