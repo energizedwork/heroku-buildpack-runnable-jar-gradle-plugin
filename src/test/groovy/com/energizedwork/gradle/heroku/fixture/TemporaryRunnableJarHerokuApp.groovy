@@ -16,7 +16,6 @@
 package com.energizedwork.gradle.heroku.fixture
 
 import groovy.json.JsonSlurper
-import org.junit.rules.ExternalResource
 import ratpack.func.Action
 import ratpack.http.client.RequestSpec
 import ratpack.test.ApplicationUnderTest
@@ -29,7 +28,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.CREATED
 import static io.netty.handler.codec.http.HttpResponseStatus.OK
 import static ratpack.test.http.TestHttpClient.testHttpClient
 
-class TemporaryRunnableJarHerokuApp extends ExternalResource implements ApplicationUnderTest {
+class TemporaryRunnableJarHerokuApp implements ApplicationUnderTest, Closeable {
 
     private static final String RUNNABLE_JAR_BUILDPACK_URL = 'https://github.com/energizedwork/heroku-buildpack-runnable-jar'
 
@@ -39,8 +38,7 @@ class TemporaryRunnableJarHerokuApp extends ExternalResource implements Applicat
 
     private final Map<String, String> configVars
 
-    @Delegate
-    private HerokuAppDetails appDetails
+    private Map<String, Object> appCreationResponse
 
     private final String herokuApiKey
 
@@ -49,14 +47,31 @@ class TemporaryRunnableJarHerokuApp extends ExternalResource implements Applicat
         this.configVars = [NO_PRE_DEPLOY: 'true'] + configVars
     }
 
-    protected void before() throws Throwable {
-        appDetails = createApp()
-        setupBuildpack()
-        setupConfigVars()
+    void close() {
+        deleteApp()
     }
 
-    protected void after() {
-        deleteApp()
+    String getName() {
+        ensureStarted()
+        appCreationResponse.name
+    }
+
+    String getGitUrl() {
+        ensureStarted()
+        appCreationResponse.git_url
+    }
+
+    URI getAddress() {
+        ensureStarted()
+        new URI(appCreationResponse.web_url)
+    }
+
+    private void ensureStarted() {
+        if (!appCreationResponse) {
+            appCreationResponse = createApp()
+            setupBuildpack()
+            setupConfigVars()
+        }
     }
 
     private void defaultRequestSpec() {
@@ -72,11 +87,11 @@ class TemporaryRunnableJarHerokuApp extends ExternalResource implements Applicat
         } as Action<RequestSpec>, requestAction))
     }
 
-    private HerokuAppDetails createApp() {
+    private Map<String, Object> createApp() {
         defaultRequestSpec()
         def response = client.post('apps')
         assert response.statusCode == CREATED.code()
-        new HerokuAppDetails(new JsonSlurper().parseText(response.body.text))
+        new JsonSlurper().parseText(response.body.text)
     }
 
     private void jsonRequest(Map<String, Object> payload) {
@@ -85,7 +100,7 @@ class TemporaryRunnableJarHerokuApp extends ExternalResource implements Applicat
                 it.add(CONTENT_TYPE, APPLICATION_JSON)
             }
             .body {
-                it.text(toJson(payload))
+                it.text(toJson(payload.findAll { it.value }))
             }
         }
     }
@@ -107,30 +122,9 @@ class TemporaryRunnableJarHerokuApp extends ExternalResource implements Applicat
     }
 
     private void deleteApp() {
-        if (appDetails) {
+        if (appCreationResponse) {
             defaultRequestSpec()
             assert client.delete("apps/$name").statusCode == OK.code()
-        }
-    }
-
-    private static class HerokuAppDetails {
-
-        private final Map<String, Object> appCreationResponse
-
-        HerokuAppDetails(Map<String, Object> appCreationResponse) {
-            this.appCreationResponse = appCreationResponse
-        }
-
-        String getName() {
-            appCreationResponse.name
-        }
-
-        String getGitUrl() {
-            appCreationResponse.git_url
-        }
-
-        URI getAddress() {
-            new URI(appCreationResponse.web_url)
         }
     }
 }

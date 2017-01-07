@@ -16,16 +16,16 @@
 package com.energizedwork.gradle.heroku
 
 import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
-import org.junit.Rule
 import spock.genesis.Gen
+import spock.lang.AutoCleanup
 import spock.lang.Shared
 
 class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     private static final String DEFAULT_RESPONSE = 'Deployed using runnable jar'
 
-    @Rule
-    TemporaryRunnableJarHerokuApp herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey)
+    @AutoCleanup
+    TemporaryRunnableJarHerokuApp herokuApp
 
     @Shared
     private File artifact
@@ -35,8 +35,17 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
         upload(artifact)
     }
 
+    void withoutPreDeploy() {
+        herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey)
+    }
+
+    void withPreDeploy() {
+        herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey, NO_PRE_DEPLOY: null)
+    }
+
     def "deploying when application name is defined"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
             applicationName = '$herokuApp.name'
@@ -51,6 +60,7 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     def "deploying when application name defaults to project name"() {
         given:
+        withoutPreDeploy()
         projectName = herokuApp.name
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
@@ -65,6 +75,7 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     def "deploying when heroku git url is specified"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
             gitUrl = '$herokuApp.gitUrl'
@@ -79,6 +90,7 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     def "deploying with custom java version"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
             applicationName = '$herokuApp.name'
@@ -97,6 +109,7 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     def "deploying with custom procfile"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
             applicationName = '$herokuApp.name'
@@ -115,6 +128,7 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     def "deploying by pushing a file"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactFile = new File('${artifact.absolutePath}')
             applicationName = '$herokuApp.name'
@@ -126,4 +140,25 @@ class IntegrationSpec extends BaseUploadedFileIntegrationSpec {
         then:
         waitFor { herokuApp.httpClient.text == DEFAULT_RESPONSE }
     }
+
+    def "application runs pre deploy action if configured to do so"() {
+        given:
+        withPreDeploy()
+        pluginConfigWithApiKey """
+            artifactUrl = '$artifactUrl'
+            applicationName = '$herokuApp.name'
+        """
+        buildFile << '''
+            herokuDeploy {
+                pushMessageLogLevel = LogLevel.LIFECYCLE
+            }
+        '''
+
+        when:
+        def result = successfullyRunDeployTask()
+
+        then:
+        result.output.contains 'Running pre-deploy actions'
+    }
+
 }

@@ -65,14 +65,18 @@ class RatpackProjectBuilder implements TestRule {
 
             public class App {
                 public static void main(String[] args) throws Exception {
-                    final String response = args.length > 0 ? args[0] : "$defaultResponseText";
-                    RatpackServer.start(s ->
-                        s.handlers(chain ->
-                            chain
-                                .get("java-version", ctx -> ctx.render(System.getProperty("java.version")))
-                                .all(ctx -> ctx.render(response))
-                        )
-                    );
+                    if (args.length == 1 && args[0].equals("pre-deploy")) {
+                        System.out.println("Running pre-deploy actions");
+                    } else {
+                        final String response = args.length > 0 ? args[0] : "$defaultResponseText";
+                        RatpackServer.start(s ->
+                            s.handlers(chain ->
+                                chain
+                                    .get("java-version", ctx -> ctx.render(System.getProperty("java.version")))
+                                    .all(ctx -> ctx.render(response))
+                            )
+                        );
+                    }
                 }
             }
         """

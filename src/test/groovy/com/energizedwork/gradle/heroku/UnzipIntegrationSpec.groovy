@@ -16,15 +16,15 @@
 package com.energizedwork.gradle.heroku
 
 import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
-import org.junit.Rule
+import spock.lang.AutoCleanup
 import spock.lang.Shared
 
 class UnzipIntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     private static final String DEFAULT_RESPONSE = 'Deployed using zip'
 
-    @Rule
-    TemporaryRunnableJarHerokuApp herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey, UNZIP_ARTIFACT: 'true')
+    @AutoCleanup
+    TemporaryRunnableJarHerokuApp herokuApp
 
     @Shared
     private File artifact
@@ -34,8 +34,17 @@ class UnzipIntegrationSpec extends BaseUploadedFileIntegrationSpec {
         upload(artifact)
     }
 
+    void withoutPreDeploy() {
+        herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey, UNZIP_ARTIFACT: true.toString())
+    }
+
+    void withPreDeploy(Map<String, String> configVars = [:]) {
+        herokuApp = new TemporaryRunnableJarHerokuApp([UNZIP_ARTIFACT: true.toString(), NO_PRE_DEPLOY: null] + configVars, testConfig.herokuApiKey)
+    }
+
     def "deploying a distribution zip"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactUrl = '$artifactUrl'
             applicationName = '$herokuApp.name'
@@ -51,6 +60,7 @@ class UnzipIntegrationSpec extends BaseUploadedFileIntegrationSpec {
 
     def "deploying by pushing a file"() {
         given:
+        withoutPreDeploy()
         pluginConfigWithApiKey """
             artifactFile = new File('${artifact.absolutePath}')
             applicationName = '$herokuApp.name'
@@ -63,4 +73,25 @@ class UnzipIntegrationSpec extends BaseUploadedFileIntegrationSpec {
         then:
         waitFor { herokuApp.httpClient.text == DEFAULT_RESPONSE }
     }
+
+    def "application can declare the pre deploy command to use"() {
+        given:
+        withPreDeploy(PRE_DEPLOY_COMMAND: "bin/$ratpackProjectBuilder.PROJECT_NAME pre-deploy")
+        pluginConfigWithApiKey """
+            artifactUrl = '$artifactUrl'
+            applicationName = '$herokuApp.name'
+        """
+        buildFile << '''
+            herokuDeploy {
+                pushMessageLogLevel = LogLevel.LIFECYCLE
+            }
+        '''
+
+        when:
+        def result = successfullyRunDeployTask()
+
+        then:
+        result.output.contains 'Running pre-deploy actions'
+    }
+
 }

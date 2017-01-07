@@ -16,18 +16,16 @@
 package com.energizedwork.gradle.heroku
 
 import com.energizedwork.gradle.heroku.fixture.TemporaryRunnableJarHerokuApp
-import org.junit.Rule
+import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarBuildpackPlugin.ASSEMBLE_REPOSITORY_CONTENTS_TASK_NAME
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarBuildpackPlugin.DEFAULT_PROCFILE_CONTENTS
-import static com.energizedwork.gradle.heroku.HerokuRunnableJarBuildpackPlugin.DEPLOY_TASK_NAME
+import static com.energizedwork.gradle.heroku.HerokuRunnableJarBuildpackPlugin.*
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
 class IncrementalBuildSpec extends BaseUploadedFileIntegrationSpec {
 
-    @Rule
+    @AutoCleanup
     TemporaryRunnableJarHerokuApp herokuApp = new TemporaryRunnableJarHerokuApp(testConfig.herokuApiKey)
 
     @Shared
