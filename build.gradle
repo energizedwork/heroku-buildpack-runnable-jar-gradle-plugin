@@ -8,6 +8,7 @@ buildscript {
         classpath 'gradle.plugin.io.ratpack:ratpack-gradle:1.4.4'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.6'
         classpath 'gradle.plugin.com.energizedwork:idea-gradle-plugins:1.1'
+        classpath 'gradle.plugin.com.energizedwork.asl2:asl2-gradle-plugin:1.0'
     }
 }
 
@@ -18,6 +19,7 @@ apply plugin: 'java-gradle-plugin'
 apply plugin: 'com.gradle.plugin-publish'
 apply plugin: 'com.energizedwork.idea-junit'
 apply plugin: 'com.energizedwork.idea-base'
+apply plugin: 'com.energizedwork.asl2'
 
 apply from: 'gradle/idea/idea.gradle'
 apply from: 'gradle/dependencyRules.gradle'
